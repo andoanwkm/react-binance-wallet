@@ -12,17 +12,41 @@ npm install --save react-connect-wallet
 
 ## Usage
 
+`index`
+
 ```tsx
-import React, { Component } from 'react'
+import React from 'react'
+import ReactDOM from 'react-dom'
+import App from './App'
+import { WalletProvider } from 'react-connect-wallet'
 
-import MyComponent from 'react-connect-wallet'
-import 'react-connect-wallet/dist/index.css'
+ReactDOM.render(<WalletProvider><App /></WalletProvider>, document.getElementById('root'))
+```
 
-class Example extends Component {
-  render() {
-    return <MyComponent />
-  }
+`App`
+
+```tsx
+import React from 'react'
+import {useWallet} from 'react-connect-wallet'
+
+const App = () => {
+  const { account, connect, reset, status, error, balance } = useWallet()
+  return (
+    <div>
+      <h1>Binance Chain Connector</h1>
+      {status === 'disconnected' ? (
+        <button onClick={() => connect('bsc')}>Connect</button>
+      ) : (
+        <button onClick={() => reset()}>Disconnect</button>
+      )}
+      { error?.message }
+      {account && <p>Connected as {account}</p>}
+      {Number(balance) >= 0 && <p>{balance}</p>}
+    </div>
+  )
 }
+
+export default App
 ```
 
 ## License

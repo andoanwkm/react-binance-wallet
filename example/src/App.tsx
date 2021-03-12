@@ -1,5 +1,4 @@
 import React from 'react'
-
 import {useWallet} from 'react-connect-wallet'
 
 const App = () => {

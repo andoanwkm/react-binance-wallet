@@ -1,7 +1,7 @@
 {
   "name": "react-connect-wallet",
   "version": "1.0.0",
-  "description": "A library helps client connect to wallet extension like Metamask, Binance Chain ",
+  "description": "A library helps client connect to wallet extension like Metamask, Binance Chain",
   "author": "andoanwkm",
   "license": "MIT",
   "repository": "andoanwkm/react-connect-wallet",
