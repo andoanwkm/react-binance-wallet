@@ -1,13 +1,15 @@
-# react-connect-wallet
+# React Binance Wallet
 
-> A library helps client connect to wallet extension like Metamask, Binance Chain 
+> A library helps the client connect to wallet extensions like Metamask, Binance Chain 
 
 [![NPM](https://img.shields.io/npm/v/react-connect-wallet.svg)](https://www.npmjs.com/package/react-connect-wallet) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ## Install
 
 ```bash
-npm install --save react-connect-wallet
+npm install --save react-binance-wallet
+
+yarn add react-binance-wallet
 ```
 
 ## Usage
