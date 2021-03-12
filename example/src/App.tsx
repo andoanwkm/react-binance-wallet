@@ -1,10 +1,22 @@
 import React from 'react'
 
-import { ExampleComponent } from 'react-connect-wallet'
-import 'react-connect-wallet/dist/index.css'
+import {useWallet} from 'react-connect-wallet'
 
 const App = () => {
-  return <ExampleComponent text="Create React Library Example 😄" />
+  const { account, connect, reset, status, error, balance } = useWallet()
+  return (
+    <div>
+      <h1>Binance Chain Connector</h1>
+      {status === 'disconnected' ? (
+        <button onClick={() => connect('bsc')}>Connect</button>
+      ) : (
+        <button onClick={() => reset()}>Disconnect</button>
+      )}
+      { error?.message }
+      {account && <p>Connected as {account}</p>}
+      {Number(balance) >= 0 && <p>{balance}</p>}
+    </div>
+  )
 }
 
 export default App
