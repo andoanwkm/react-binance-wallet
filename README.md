@@ -1,7 +1,6 @@
 # React Binance Wallet
 
-> A library helps the client connect to wallet extensions like Metamask, Binance Chain 
-> This project based on source code of [use-wallet](https://github.com/aragon/use-wallet)
+> A library helps the client connect to wallet extensions like Metamask, Binance Chain. This project based on source code of [use-wallet](https://github.com/aragon/use-wallet)
 
 [![NPM](https://img.shields.io/npm/v/react-connect-wallet.svg)](https://www.npmjs.com/package/react-connect-wallet) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
