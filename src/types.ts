@@ -32,14 +32,18 @@ type EthereumProviderSendAsync = {
   selectedAddress: string
 }
 
+type EthereumProviderEvents = {
+  on: (event: string, result: (chainId: number) => void) => void
+}
+
 export type EthereumProvider = EthereumProviderEip1193 &
   EthereumProviderSend &
-  EthereumProviderSendAsync
+  EthereumProviderSendAsync & EthereumProviderEvents
 
 export type Wallet = {
   account: Account | null
   balance?: string
-  chainId?: number
+  chainId?: number | null
   connect: (connectorId: string) => void
   connector: string | null
   connectors: object

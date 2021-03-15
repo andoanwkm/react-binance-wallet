@@ -107,6 +107,13 @@ export async function getAccountBalance(
   return ethereumRequest(ethereum, 'eth_getBalance', [account, 'latest'])
 }
 
+export async function getChainId(
+  ethereum: EthereumProvider
+) {
+  return ethereumRequest(ethereum, 'eth_chainId', [])
+}
+
+
 export function pollEvery<R, T>(
   fn: (
     // As of TS 3.9, it doesn’t seem possible to specify dynamic params

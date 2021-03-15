@@ -29,10 +29,15 @@ import {
   Account,
   EthereumProvider
 } from './types'
-import { getAccountBalance, getAccountIsContract, getNetworkName, pollEvery } from './utils'
+import {
+  getAccountBalance,
+  getAccountIsContract,
+  getChainId,
+  pollEvery
+} from './utils'
 import PropTypes from 'prop-types'
 import JSBI from 'jsbi'
-
+import { InjectedConnector } from '@web3-react/injected-connector'
 
 const NO_BALANCE = '-1'
 
@@ -47,13 +52,15 @@ type WalletContext = {
 const UseWalletContext = React.createContext<WalletContext>(null)
 
 type WalletProviderProps = {
-  chainId: number
   children: ReactNode
   pollBalanceInterval: number
   // pollBlockNumberInterval: number
 }
 
-const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProviderProps) => {
+const WalletProvider = ({
+  children,
+  pollBalanceInterval
+}: WalletProviderProps) => {
   const walletContext = useContext(UseWalletContext)
 
   if (walletContext !== null) {
@@ -67,26 +74,35 @@ const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProvid
   const web3ReactContext = useWeb3React()
   const activationId = useRef<number>(0)
   const { account, library } = web3ReactContext
-  const balance = useWalletBalance({ account, library, pollBalanceInterval }) 
+  const balance = useWalletBalance({ account, library, pollBalanceInterval })
+  const chainId = useChainId({ library })
   const connectors: any = useMemo(
     () => ({
-      bsc: [
-        () => ({
-          web3ReactConnector() {
-            return new BscConnector({ supportedChainIds: [56, 97] })
-          },
-          handleActivationError(err: any) {
-            console.log('err', err)
-            if (err instanceof UserRejectedRequestError) {
-              return new ConnectionRejectedError()
-            }
-            return new Error('Unknown error')
+      bsc: () => ({
+        web3ReactConnector() {
+          return new BscConnector({ supportedChainIds: [56, 97] })
+        },
+        handleActivationError(err: any) {
+          if (err instanceof UserRejectedRequestError) {
+            return new ConnectionRejectedError()
           }
-        }), null
-      ]
+          return new Error('Unknown error')
+        }
+      }),
+      injected: () => ({
+        web3ReactConnector() {
+          return new InjectedConnector({ supportedChainIds: [56, 97] })
+        },
+        handleActivationError(err: Error) {
+          return err instanceof UserRejectedRequestError
+            ? new ConnectionRejectedError()
+            : null
+        }
+      })
     }),
     []
   )
+
 
   const reset = useCallback(() => {
     if (web3ReactContext.active) {
@@ -119,16 +135,13 @@ const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProvid
       // the connection stage status
       setStatus('connecting')
 
-      const [connectorInit, connectorConfig] = connectors[connectorId] || []
+      const connectorInit = connectors[connectorId] || []
 
       // Initialize the (useWallet) connector if it exists.
       const connector = await connectorInit?.()
 
       // Initialize the web3-react connector if it exists.
-      const web3ReactConnector = connector?.web3ReactConnector?.({
-        chainId,
-        ...(connectorConfig || {})
-      })
+      const web3ReactConnector = connector?.web3ReactConnector?.()
 
       if (!web3ReactConnector) {
         setStatus('error')
@@ -154,7 +167,7 @@ const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProvid
         setStatus('error')
 
         if (err instanceof UnsupportedChainIdError) {
-          setError(new ChainUnsupportedError(-1, chainId))
+          setError(new ChainUnsupportedError())
           return
         }
         // It might have thrown with an error known by the connector
@@ -169,7 +182,7 @@ const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProvid
         setError(err)
       }
     },
-    [chainId, connectors, reset, web3ReactContext]
+    [connectors, reset, web3ReactContext]
   )
 
   useEffect(() => {
@@ -200,13 +213,12 @@ const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProvid
       _web3ReactContext: web3ReactContext,
       account: account || null,
       balance,
-      chainId,
       connect,
       connector,
       connectors,
+      chainId,
       error,
       library,
-      networkName: getNetworkName(chainId),
       reset,
       status,
       type
@@ -214,10 +226,10 @@ const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProvid
     [
       account,
       balance,
-      chainId,
       connect,
       connector,
       connectors,
+      chainId,
       error,
       library,
       type,
@@ -228,39 +240,35 @@ const WalletProvider = ({ children, chainId, pollBalanceInterval }: WalletProvid
   )
 
   return (
-      <UseWalletContext.Provider
-        value={{
-          // addBlockNumberListener,
-          // pollBlockNumberInterval,
-          // removeBlockNumberListener,
-          pollBalanceInterval,
-          wallet
-        }}
-      >
-        {children}
-      </UseWalletContext.Provider>
+    <UseWalletContext.Provider
+      value={{
+        // addBlockNumberListener,
+        // pollBlockNumberInterval,
+        // removeBlockNumberListener,
+        pollBalanceInterval,
+        wallet
+      }}
+    >
+      {children}
+    </UseWalletContext.Provider>
   )
 }
 
-
-
 WalletProvider.defaultProps = {
-  chainId: 1,
-  pollBalanceInterval: 2000,
+  pollBalanceInterval: 2000
   // pollBlockNumberInterval: 5000,
 }
 
 WalletProvider.propTypes = {
-  chainId: PropTypes.number,
   children: PropTypes.node,
-  pollBalanceInterval: PropTypes.number,
+  pollBalanceInterval: PropTypes.number
   // pollBlockNumberInterval: PropTypes.number,
 }
 
-const useWalletBalance =({
+const useWalletBalance = ({
   account,
   library,
-  pollBalanceInterval,
+  pollBalanceInterval
 }: {
   account?: Account | null
   library?: EthereumProvider
@@ -296,7 +304,7 @@ const useWalletBalance =({
               lastBalance = balance
               onUpdate(balance)
             }
-          },
+          }
         }
       },
       pollBalanceInterval
@@ -313,6 +321,26 @@ const useWalletBalance =({
   }, [account, library, pollBalanceInterval])
 
   return balance
+}
+
+const useChainId = ({ library }: { library: EthereumProvider }) => {
+  const [chainId, setChainId] = useState<number | null>(null)
+  useEffect(() => {
+    if (!library) {
+      return
+    }
+
+    getChainId(library).then((value) => {
+      setChainId(parseInt(value.toString(), 16));
+    })
+
+    library.on('chainChanged', (value) => setChainId(parseInt(value.toString(), 16)));
+
+    return () => {
+      setChainId(null)
+    }
+  }, [library])
+  return chainId;
 }
 
 const useWallet = () => {
@@ -337,7 +365,6 @@ const useWallet = () => {
   // }, [getBlockNumber, wallet])
 }
 
-
 function WalletProviderWrapper(props: WalletProviderProps) {
   return (
     <Web3ReactProvider getLibrary={(library) => library}>
@@ -349,8 +376,4 @@ function WalletProviderWrapper(props: WalletProviderProps) {
 WalletProviderWrapper.propTypes = WalletProvider.propTypes
 WalletProviderWrapper.defaultProps = WalletProvider.defaultProps
 
-
-export {
-  WalletProviderWrapper as WalletProvider,
-  useWallet
-}
+export { WalletProviderWrapper as WalletProvider, useWallet }
