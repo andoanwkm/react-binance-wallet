@@ -48,7 +48,7 @@ export function rpcResult(response: unknown): unknown | null {
 async function ethereumRequest(
   ethereum: EthereumProvider,
   method: string,
-  params: string[]
+  params: any[]
 ): Promise<any> {
   // If ethereum.request() exists, the provider is probably EIP-1193 compliant.
   if (ethereum.request) {
@@ -105,6 +105,12 @@ export async function getAccountBalance(
   account: Account
 ) {
   return ethereumRequest(ethereum, 'eth_getBalance', [account, 'latest'])
+}
+
+export async function requestAccounts(
+  ethereum: EthereumProvider
+) {
+  return ethereumRequest(ethereum, 'wallet_requestPermissions', [{ eth_accounts: {} }])
 }
 
 export async function getChainId(

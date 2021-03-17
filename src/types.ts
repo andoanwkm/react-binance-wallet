@@ -50,6 +50,7 @@ export type Wallet = {
   error: Error | null
   library?: any
   getBlockNumber?: () => number | null
+  changeAccount: () => void
   networkName?: string
   reset: () => void
   status: Status

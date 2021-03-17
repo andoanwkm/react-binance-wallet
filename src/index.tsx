@@ -33,7 +33,8 @@ import {
   getAccountBalance,
   getAccountIsContract,
   getChainId,
-  pollEvery
+  pollEvery,
+  requestAccounts
 } from './utils'
 import PropTypes from 'prop-types'
 import JSBI from 'jsbi'
@@ -82,11 +83,10 @@ const WalletProvider = ({
         web3ReactConnector() {
           return new BscConnector({ supportedChainIds: [56, 97] })
         },
-        handleActivationError(err: any) {
-          if (err instanceof UserRejectedRequestError) {
-            return new ConnectionRejectedError()
-          }
-          return new Error('Unknown error')
+        handleActivationError(err: Error) {
+          return err instanceof UserRejectedRequestError
+          ? new ConnectionRejectedError()
+          : null
         }
       }),
       injected: () => ({
@@ -103,6 +103,13 @@ const WalletProvider = ({
     []
   )
 
+  const changeAccount = useCallback(() => {
+    try {
+      if (connector === 'injected') {
+        requestAccounts(library);
+      }
+    } catch (err) {}
+  }, [library])
 
   const reset = useCallback(() => {
     if (web3ReactContext.active) {
@@ -216,6 +223,7 @@ const WalletProvider = ({
       connect,
       connector,
       connectors,
+      changeAccount,
       chainId,
       error,
       library,
@@ -229,6 +237,7 @@ const WalletProvider = ({
       connect,
       connector,
       connectors,
+      changeAccount,
       chainId,
       error,
       library,
