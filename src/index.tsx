@@ -55,12 +55,14 @@ const UseWalletContext = React.createContext<WalletContext>(null)
 type WalletProviderProps = {
   children: ReactNode
   pollBalanceInterval: number
+  chainIds: number[]
   // pollBlockNumberInterval: number
 }
 
 const WalletProvider = ({
   children,
-  pollBalanceInterval
+  pollBalanceInterval,
+  chainIds,
 }: WalletProviderProps) => {
   const walletContext = useContext(UseWalletContext)
 
@@ -81,7 +83,7 @@ const WalletProvider = ({
     () => ({
       bsc: () => ({
         web3ReactConnector() {
-          return new BscConnector({ supportedChainIds: [56, 97] })
+          return new BscConnector({ supportedChainIds: chainIds })
         },
         handleActivationError(err: Error) {
           return err instanceof UserRejectedRequestError
@@ -91,7 +93,7 @@ const WalletProvider = ({
       }),
       injected: () => ({
         web3ReactConnector() {
-          return new InjectedConnector({ supportedChainIds: [56, 97] })
+          return new InjectedConnector({ supportedChainIds: chainIds })
         },
         handleActivationError(err: Error) {
           return err instanceof UserRejectedRequestError
@@ -264,13 +266,15 @@ const WalletProvider = ({
 }
 
 WalletProvider.defaultProps = {
-  pollBalanceInterval: 2000
+  pollBalanceInterval: 2000,
+  chainIds: [56, 97]
   // pollBlockNumberInterval: 5000,
 }
 
 WalletProvider.propTypes = {
   children: PropTypes.node,
-  pollBalanceInterval: PropTypes.number
+  pollBalanceInterval: PropTypes.number,
+  chainIds: PropTypes.arrayOf(PropTypes.number)
   // pollBlockNumberInterval: PropTypes.number,
 }
 
